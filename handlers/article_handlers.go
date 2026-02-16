@@ -8,53 +8,72 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
+	"strings"
+	"web-blog/handlers/middleware"
 	"web-blog/model"
+	"web-blog/utils"
 )
 
 func parseTemplates(templateName string) *template.Template {
-	tmpl, err := template.ParseFiles("templates/catalog.html")
+	tmpl, err := template.ParseFiles(fmt.Sprintf("templates/%s", templateName))
 	if err != nil {
 		panic(fmt.Sprintf("error parsing template %s, %v", templateName, err))
 	}
-
 	return tmpl
 }
 
 // CRUD
 // Create
-func CreateArticle(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not Allowed", http.StatusMethodNotAllowed)
+func createArticle(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		tmpl := parseTemplates("newArticle.html")
+		tmpl.Execute(w, nil)
 		return
 	}
 
-	var a model.Article
-	err := json.NewDecoder(r.Body).Decode(&a)
-	if err != nil {
-		http.Error(w, `{"error":"invalid JSON"}`, http.StatusMethodNotAllowed)
-		return
-	}
-	defer r.Body.Close()
-
-	//Validation
-	if a.Title == "" || len(a.Title) > 100 {
-		http.Error(w, `{"error":"title required and  <100 chars"}`, http.StatusBadRequest)
+	user := middleware.GetUserFromContext(r)
+	if user == nil {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 
-	if a.Content == "" {
-		http.Error(w, `{"error":"content required"}`, http.StatusBadRequest)
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	published := r.FormValue("published")
+
+	// Validation
+	if err := utils.ValidateTitle(title); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
-
-	if _, err := time.Parse("2006-01-02", a.Published); err != nil {
-		http.Error(w, `{"error":"invalid date format YYYY-MM-DD"}`, http.StatusBadRequest)
+	if err := utils.ValidateContent(content); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+	if err := utils.ValidatePublished(published); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
 	files, _ := os.ReadDir("articles")
-	a.ID = len(files) + 1
+	maxID := 0
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".json") {
+			var id int
+			fmt.Scanf(file.Name(), "post%d.json", &id)
+			if id > maxID {
+				maxID = id
+			}
+		}
+	}
+
+	var a model.Article
+	a.Title = title
+	a.Content = content
+	a.Published = published
+	a.Author = user.Username
+	a.ID = maxID + 1
 
 	filePath := fmt.Sprintf("articles/article%d.json", a.ID)
 	file, _ := os.Create(filePath)
@@ -62,17 +81,10 @@ func CreateArticle(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	json.NewEncoder(file).Encode(a)
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(a)
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
-// Read all
-func GetArticles(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
+func getArticles() []model.Article {
 	files, _ := os.ReadDir("articles")
 	var articles []model.Article
 
@@ -85,68 +97,117 @@ func GetArticles(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(data, &art)
 		articles = append(articles, art)
 	}
+	return articles
+}
 
-	json.NewEncoder(w).Encode(articles)
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	articles := getArticles()
+	tmpl := parseTemplates("home.html")
+	tmpl.Execute(w, articles)
+}
+
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+	articles := getArticles()
+	tmpl := parseTemplates("dashboard.html")
+	tmpl.Execute(w, articles)
 }
 
 // getArticle
-// Update
-func UpdateArticle(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPut {
-		http.Error(w, "Method not Allowed", http.StatusMethodNotAllowed)
-		return
+func getArticleByID(id int) *model.Article {
+	filePath := fmt.Sprintf("articles/article%d.json", id)
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil
 	}
+	var a model.Article
+	json.Unmarshal(data, &a)
+	return &a
+}
 
-	idStr := r.URL.Path[len("/articles"):]
+// Update
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/edit/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, `{"error":"invalid id"}`, http.StatusBadRequest)
+		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
-	var a model.Article
-	err = json.NewDecoder(r.Body).Decode(&a)
-	if err != nil {
-		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
+	if r.Method == http.MethodGet {
+
+		article := getArticleByID(id)
+		if article == nil {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+
+		tmpl := parseTemplates("updateArticle.html")
+		tmpl.Execute(w, article)
 		return
 	}
-	defer r.Body.Close()
 
-	a.ID = id
-
-	filePath := fmt.Sprintf("articles/article%d.json", a.ID)
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+	if r.Method != http.MethodPut {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+	published := r.FormValue("published")
+
+	article := model.Article{
+		ID:        id,
+		Title:     title,
+		Content:   content,
+		Published: published,
+	}
+
+	filePath := fmt.Sprintf("articles/article%d.json", id)
 
 	file, _ := os.Create(filePath)
 	defer file.Close()
-	json.NewEncoder(file).Encode(a)
+
+	json.NewEncoder(file).Encode(article)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(a)
 }
 
 // Delete
-func DeleteArticle(w http.ResponseWriter, r *http.Request) {
+func deleteArticle(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	idStr := r.URL.Path[len("/articles/"):]
+	idStr := strings.TrimPrefix(r.URL.Path, "/delete/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, `{"error":"invalid id"}`, http.StatusBadRequest)
+		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
 	filePath := fmt.Sprintf("articles/article%d.json", id)
+
 	if err := os.Remove(filePath); err != nil {
-		http.Error(w, `{"error":"not found"}`, http.StatusNotFound)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
+}
+
+func CreateArticleWithAuthI() http.HandlerFunc {
+	return middleware.CookieAuthMiddleware(createArticle)
+}
+
+func DashboardArticleWithAuthI() http.HandlerFunc {
+	return middleware.CookieAuthMiddleware(dashboardHandler)
+}
+func UpdateArticleWithAuthI() http.HandlerFunc {
+	return middleware.CookieAuthMiddleware(updateArticle)
+}
+func DeleteArticleWithAuthI() http.HandlerFunc {
+	return middleware.CookieAuthMiddleware(deleteArticle)
 }

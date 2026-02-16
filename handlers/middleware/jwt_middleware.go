@@ -26,7 +26,7 @@ func JWTMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			http.Error(w, `{"error":"malformed auth header}`, http.StatusUnauthorized)
+			http.Error(w, `{"error":"malformed auth header"}`, http.StatusUnauthorized)
 			return
 		}
 
@@ -89,7 +89,7 @@ func validateJWT(tokenString string) (*Claims, error) {
 }
 
 func GenerateJWT(username string) (string, error) {
-	claims := Claims{
+	claims := &Claims{
 		Username: username,
 		Role:     "admin",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -98,7 +98,7 @@ func GenerateJWT(username string) (string, error) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 

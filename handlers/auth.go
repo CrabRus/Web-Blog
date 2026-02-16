@@ -38,9 +38,24 @@ func hashPassword(pass string) string {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		tmpl := template.Must(template.ParseFiles("templates/login.html"))
-		tmpl.Execute(w, nil)
+	if r.Method == "GET" {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+       <title>Login</title>
+    </head>
+    <body>
+       <h2>Admin Login</h2>
+       <form method="POST" action = "/login">
+          <input type="text" name = "username" placeholder= "Username" required>
+          <input type="password" name = "password" placeholder= "Password" required>
+          <button type = "submit">Login</button>
+       </form>
+    </body>
+    </html>
+    `))
 		return
 	}
 
