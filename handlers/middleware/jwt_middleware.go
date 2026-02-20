@@ -57,7 +57,7 @@ func CookieAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claims, err := validateJWT(cookie.Value)
 		if err != nil || claims == nil {
-			clearAuthCookie(w)
+			ClearAuthCookie(w)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -67,7 +67,7 @@ func CookieAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func clearAuthCookie(w http.ResponseWriter) {
+func ClearAuthCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
@@ -110,7 +110,19 @@ func GetUserFromContext(r *http.Request) *Claims {
 	return claims
 }
 
-//Middleware — це функція, яка отримує handler,
-// обгортає його і може виконати код до та після основної обробки запиту.
-// Це схоже на ланцюжок: запит проходить
-// через кілька middleware, перш ніж дійде до кінцевої функції.
+func AdminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := GetUserFromContext(r)
+		if user == nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if user.Role != "admin" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+
+		next(w, r)
+	}
+}

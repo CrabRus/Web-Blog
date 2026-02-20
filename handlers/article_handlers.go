@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,22 +13,15 @@ import (
 	"web-blog/utils"
 )
 
-func parseTemplates(templateName string) *template.Template {
-	tmpl, err := template.ParseFiles(fmt.Sprintf("templates/%s", templateName))
-	if err != nil {
-		panic(fmt.Sprintf("error parsing template %s, %v", templateName, err))
-	}
-	return tmpl
-}
-
 // CRUD
 // Create
 func createArticle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		tmpl := parseTemplates("newArticle.html")
+		tmpl := utils.ParseTemplates("newArticle.html")
 		tmpl.Execute(w, nil)
 		return
 	}
+	defer r.Body.Close()
 
 	user := middleware.GetUserFromContext(r)
 	if user == nil {
@@ -55,32 +47,17 @@ func createArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files, _ := os.ReadDir("articles")
-	maxID := 0
-
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".json") {
-			var id int
-			fmt.Scanf(file.Name(), "post%d.json", &id)
-			if id > maxID {
-				maxID = id
-			}
-		}
-	}
-
 	var a model.Article
 	a.Title = title
 	a.Content = content
 	a.Published = published
 	a.Author = user.Username
-	a.ID = maxID + 1
+	a.ID = utils.GetMaxArticleID("articles") + 1
 
-	filePath := fmt.Sprintf("articles/article%d.json", a.ID)
-	file, _ := os.Create(filePath)
-
-	defer file.Close()
-	json.NewEncoder(file).Encode(a)
-
+	if err := utils.CreateArticleByFilePath("articles", a); err != nil {
+		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
@@ -102,18 +79,18 @@ func getArticles() []model.Article {
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	articles := getArticles()
-	tmpl := parseTemplates("home.html")
+	tmpl := utils.ParseTemplates("home.html")
 	tmpl.Execute(w, articles)
 }
 
 func dashboardHandler(w http.ResponseWriter, r *http.Request) {
 	articles := getArticles()
-	tmpl := parseTemplates("dashboard.html")
+	tmpl := utils.ParseTemplates("dashboard.html")
 	tmpl.Execute(w, articles)
 }
 
 // getArticle
-func getArticleByID(id int) *model.Article {
+func GetArticleByID(id int) *model.Article {
 	filePath := fmt.Sprintf("articles/article%d.json", id)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -136,13 +113,13 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
-		article := getArticleByID(id)
+		article := GetArticleByID(id)
 		if article == nil {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
 
-		tmpl := parseTemplates("updateArticle.html")
+		tmpl := utils.ParseTemplates("updateArticle.html")
 		tmpl.Execute(w, article)
 		return
 	}
@@ -199,15 +176,25 @@ func deleteArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateArticleWithAuthI() http.HandlerFunc {
-	return middleware.CookieAuthMiddleware(createArticle)
+	return middleware.CookieAuthMiddleware(
+		middleware.AdminOnly(createArticle),
+	)
 }
 
 func DashboardArticleWithAuthI() http.HandlerFunc {
-	return middleware.CookieAuthMiddleware(dashboardHandler)
+	return middleware.CookieAuthMiddleware(
+		middleware.AdminOnly(dashboardHandler),
+	)
 }
+
 func UpdateArticleWithAuthI() http.HandlerFunc {
-	return middleware.CookieAuthMiddleware(updateArticle)
+	return middleware.CookieAuthMiddleware(
+		middleware.AdminOnly(updateArticle),
+	)
 }
+
 func DeleteArticleWithAuthI() http.HandlerFunc {
-	return middleware.CookieAuthMiddleware(deleteArticle)
+	return middleware.CookieAuthMiddleware(
+		middleware.AdminOnly(deleteArticle),
+	)
 }

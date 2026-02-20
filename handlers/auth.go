@@ -82,7 +82,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := middleware.GenerateJWT(username)
 	if err != nil {
-		http.Error(w, `{"error":"failed generate token}`, http.StatusInternalServerError)
+		http.Error(w, `{"error":"failed generate token"}`, http.StatusInternalServerError)
 		return
 	}
 
@@ -91,5 +91,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	middleware.ClearAuthCookie(w)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
