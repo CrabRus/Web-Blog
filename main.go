@@ -22,7 +22,8 @@ func init() {
 
 func main() {
 	http.HandleFunc("/", api.HomeHandler)
-	// http.HandleFunc("/articles/", api.ArticleHandler)
+	http.HandleFunc("/articles/", api.ArticleHandler)
+	http.HandleFunc("/search", api.SearchHandler)
 	http.HandleFunc("/dashboard", api.DashboardArticleWithAuthI())
 	http.HandleFunc("/new", api.CreateArticleWithAuthI())
 	http.HandleFunc("/edit/", api.UpdateArticleWithAuthI())

@@ -13,6 +13,12 @@ import (
 	"web-blog/utils"
 )
 
+// Search helper struct
+type SearchResult struct {
+	Articles []model.Article
+	Query    string
+}
+
 // CRUD
 // Create
 func createArticle(w http.ResponseWriter, r *http.Request) {
@@ -197,4 +203,73 @@ func DeleteArticleWithAuthI() http.HandlerFunc {
 	return middleware.CookieAuthMiddleware(
 		middleware.AdminOnly(deleteArticle),
 	)
+}
+
+func ArticleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/articles/")
+	if idStr == "" {
+		http.Error(w, "article id required", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	article := GetArticleByID(id)
+	if article == nil {
+		http.Error(w, "article not found", http.StatusNotFound)
+		return
+	}
+
+	tmpl := utils.ParseTemplates("articlepage.html")
+	tmpl.Execute(w, article)
+}
+
+// SearchHandler searches articles by title and content
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+
+	// If no query, redirect to home
+	if query == "" {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// Get all articles
+	allArticles := getArticles()
+
+	// Filter articles by query (case-insensitive)
+	var results []model.Article
+	queryLower := strings.ToLower(query)
+
+	for _, article := range allArticles {
+		titleMatch := strings.Contains(strings.ToLower(article.Title), queryLower)
+		contentMatch := strings.Contains(strings.ToLower(article.Content), queryLower)
+
+		if titleMatch || contentMatch {
+			results = append(results, article)
+		}
+	}
+
+	// Prepare search result struct
+	searchResult := SearchResult{
+		Articles: results,
+		Query:    query,
+	}
+
+	tmpl := utils.ParseTemplates("search_results.html")
+	tmpl.Execute(w, searchResult)
 }

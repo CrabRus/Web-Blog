@@ -4,67 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
+
     <style>
         body {
-            font-family: "Comic Sans MS", sans-serif;
-            background-color: #f9f9f9;
-            margin: 20px;
-            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f8fb;
+            color: #1a1a1a;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgb(255, 255, 255);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #0077cc;
+        }
+
+        .login-btn {
+            padding: 8px 18px;
+            border-radius: 6px;
+            background-color: #0077cc;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s ease;
+        }
+
+        .login-btn:hover {
+            background-color: #005fa3;
         }
 
         .article-container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 750px;
+            margin: 60px auto;
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 14px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 119, 204, 0.1);
         }
 
         .article-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 28px;
+            font-weight: 600;
             margin-bottom: 10px;
+            color: #0077cc;
         }
 
         .article-date {
             font-size: 14px;
-            color: #aaa;
-            margin-bottom: 20px;
+            color: #7a8a99;
+            margin-bottom: 25px;
         }
 
         .article-content {
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 17px;
+            line-height: 1.8;
             color: #333;
+            word-wrap: break-word;
         }
 
         .back-home {
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            height: 100vh;
             text-align: center;
+            margin-top: 30px;
         }
-        .back-home a{
+
+        .back-home a {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 6px;
+            background-color: #0077cc;
+            color: white;
             text-decoration: none;
-            color: #333333;
+            font-size: 14px;
+            transition: 0.2s ease;
         }
 
-
+        .back-home a:hover {
+            background-color: #005fa3;
+        }
     </style>
 </head>
+
 <body>
+        <div class="header">
+        <h1>News</h1>
+        <a href="/login" class="login-btn">Login</a>
+    </div>
+
 <div class="article-container">
     <h1 class="article-title">{{.Title}}</h1>
     <p class="article-date">{{.Published}}</p>
+
     <div class="article-content">
         {{.Content}}
     </div>
+
+    <div class="back-home">
+        <a href="/home">← Back to home</a>
+    </div>
 </div>
-<div class="back-home">
-    <a href="/home">back to home</a>
-</div>
+
 </body>
 </html>
