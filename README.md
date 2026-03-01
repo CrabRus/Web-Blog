@@ -34,8 +34,8 @@ A lightweight, full-featured personal blog built with **Go** and pure **HTML/CSS
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/personal-blog.git
-cd personal-blog
+git clone https://github.com/CrabRus/Web-Blog.git
+cd web-blog
 ```
 
 2. **Install dependencies**
@@ -88,7 +88,6 @@ web-blog/
 │   ├── login_error.html   # Login error page
 │   └── search_results.html # Search results page
 ├── articles/              # JSON article storage
-├── static/                # CSS stylesheets
 ├── main.go                # Application entry point
 ├── go.mod                 # Go module file
 ├── .env                   # Environment variables
@@ -267,17 +266,6 @@ Test files:
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to contribute:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
 
 ## 📦 Dependencies
 
@@ -319,7 +307,6 @@ Planned features for future releases:
 - [ ] 📊 **Article Sorting** - Sort by date, popularity, etc.
 - [ ] 🗄️ **Database Support** - Migrate from files to SQL database
 - [ ] 🔄 **RSS Feed** - Subscribe to new articles
-- [ ] 📱 **Mobile App** - Native mobile application
 
 ---
 
@@ -329,11 +316,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 🙋 Support
-
-Have questions? Open an issue or contact the maintainers.
-
----
 
 ## 📊 Project Stats
 
@@ -343,28 +325,3 @@ Have questions? Open an issue or contact the maintainers.
 - **Last Updated:** March 2026
 
 ---
-
-## 🎯 Scoring
-
-This project achieves:
-- ✅ **120/120 points** - Full implementation of requirements
-- ✅ **Excellent Architecture** - Clean, maintainable code
-- ✅ **Complete Features** - All guest and admin features
-- ✅ **Security** - JWT authentication with HTTP-only cookies
-- ✅ **Testing** - Comprehensive test coverage
-
----
-
-## 🌟 Show Your Support
-
-Give this project a star if you found it helpful!
-
-```
-⭐ Star this repo on GitHub
-🔗 Share with your friends
-📧 Contribute and improve it
-```
-
----
-
-**Made with ❤️ in Go**
