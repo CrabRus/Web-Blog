@@ -1,48 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Articles</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>News</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        .article {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f8fb;
+    color: #1a1a1a;
+}
 
-        .article h2 {
-            margin: 0;
-            font-size: 20px;
-        }
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,119,204,.06);
+}
 
-        .article p {
-            margin: 5px 0 0;
-        }
-        .article a {
-            text-decoration: none;
-            color: black;
-        }
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #0077cc;
+}
 
-    </style>
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: .2s;
+}
+
+.btn-primary {
+    background: #0077cc;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #005fa3;
+}
+
+.btn-outline {
+    border: 1px solid #0077cc;
+    color: #0077cc;
+}
+
+.btn-outline:hover {
+    background: #0077cc;
+    color: white;
+}
+
+/* Container */
+.container {
+    max-width: 750px;
+    margin: 40px auto;
+    padding: 0 18px;
+}
+
+/* Search */
+.search-box {
+    background: #fff;
+    padding: 18px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,119,204,.06);
+}
+
+.search-form {
+    display: flex;
+    gap: 8px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #dbe3ea;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #0077cc;
+    box-shadow: 0 0 0 3px rgba(0,119,204,.08);
+}
+
+.search-btn {
+    padding: 9px 16px;
+    background: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-btn:hover {
+    background: #005fa3;
+}
+
+/* Article Card */
+.article {
+    display: block;
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,119,204,.06);
+    text-decoration: none;
+    color: inherit;
+    transition: .2s;
+}
+
+.article:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0,119,204,.12);
+}
+
+.article-title {
+    margin: 0 0 6px;
+    font-size: 18px;
+    color: #0077cc;
+}
+
+.meta {
+    font-size: 12px;
+    color: #7a8a99;
+    margin-bottom: 10px;
+}
+
+.content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+}
+</style>
 </head>
+
 <body>
-<h1>Articles</h1>
-{{range .}}
-<div class="article">
-    <h2>
-        <a href="/article/{{.ID}}" class="article-link">{{.Title}}</a>
-    </h2>
-    <p>{{.Content}}</p>
-    <p>{{.Published}}</p>
+
+<div class="header">
+    <h1>News</h1>
+
+    <div class="header-buttons">
+        <a href="/dashboard" class="btn btn-outline">Dashboard</a>
+        <a href="/login" class="btn btn-primary">Login</a>
+    </div>
 </div>
-{{else}}
-<p>No articles found.</p>
-{{end}}
+
+<div class="container">
+
+    <div class="search-box">
+        <form class="search-form" method="GET" action="/search">
+            <input type="text" name="q" class="search-input" placeholder="Search articles..." required>
+            <button type="submit" class="search-btn">Search</button>
+        </form>
+    </div>
+
+    {{range .}}
+    <a href="/articles/{{.ID}}" class="article">
+        <h2 class="article-title">{{.Title}}</h2>
+        <div class="meta">{{.Published}}</div>
+        <div class="content">
+            {{.Content}}
+        </div>
+    </a>
+    {{else}}
+    <p class="empty">No articles found.</p>
+    {{end}}
+
+</div>
+
 </body>
 </html>
