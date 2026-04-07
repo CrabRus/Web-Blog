@@ -1,0 +1,46 @@
+# Version control
+.git
+.gitignore
+.github
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Build and dependency directories
+vendor/
+.cache
+dist/
+build/
+
+# Test files and coverage
+*_test.go
+coverage/
+*.out
+*.prof
+coverage.out
+
+# Environment and configuration
+.env
+.env.local
+.env.*.local
+
+# Runtime artifacts
+articles/
+
+# Documentation
+docs/
+
+# OS files
+Thumbs.db
+.directory
+
+# Temporary files
+tmp/
+temp/
+*.tmp

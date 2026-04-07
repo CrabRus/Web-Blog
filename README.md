@@ -27,8 +27,14 @@ A lightweight, full-featured personal blog built with **Go** and pure **HTML/CSS
 ## 🚀 Quick Start
 
 ### Prerequisites
+
+#### For Local Development
 - Go 1.25.0 or higher
 - Git
+
+#### For Docker
+- Docker 20.10.0 or higher
+- Docker Compose 1.29.0 or higher
 
 ### Installation
 
@@ -59,6 +65,409 @@ ADMIN_PASSWORD=your-password
 ```bash
 go run main.go
 ```
+
+The application will start at `http://localhost:8080`
+
+---
+
+## 🐳 Docker Installation (Recommended)
+
+### Using Docker Compose (Simple & Recommended)
+
+The easiest way to run the blog is with Docker Compose. All dependencies are automatically handled.
+
+#### 1. **Clone the repository**
+```bash
+git clone https://github.com/CrabRus/Web-Blog.git
+cd web-blog
+```
+
+#### 2. **Create `.env` file from example**
+```bash
+cp .env.example .env
+```
+
+#### 3. **Customize environment variables** (optional)
+Edit `.env` file to change port or credentials:
+```env
+PORT=8080
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-secure-password
+```
+
+#### 4. **Build and run the container**
+```bash
+docker-compose up -d
+```
+
+#### 5. **Verify it's running**
+```bash
+docker-compose ps
+```
+
+You should see the blog service with `healthy` status. The blog will be available at `http://localhost:8080`
+
+#### 6. **Stop the container**
+```bash
+docker-compose down
+```
+
+#### 7. **Stop and remove all data**
+```bash
+docker-compose down -v
+```
+
+### Using Docker only (without Compose)
+
+#### 1. **Build the Docker image**
+```bash
+docker build -t personal-blog .
+```
+
+#### 2. **Create volume for articles**
+```bash
+docker volume create blog-articles
+```
+
+#### 3. **Run the container**
+```bash
+docker run -d \
+  --name personal-blog \
+  -p 8080:8080 \
+  -v blog-articles:/app/articles \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD=123 \
+  personal-blog
+```
+
+#### 4. **Check if it's running**
+```bash
+docker ps
+docker logs personal-blog
+```
+
+#### 5. **Stop the container**
+```bash
+docker stop personal-blog
+docker rm personal-blog
+```
+
+---
+
+## 📦 Docker Files Explained
+
+### **Dockerfile** Features:
+- **Multi-stage build**: Reduces final image size from ~500MB to ~25MB
+- **Builder stage**: Compiles Go application with all dependencies
+- **Runtime stage**: Alpine Linux based for minimal footprint
+- **Non-root user**: Runs as `bloguser` for security
+- **Health check**: Automatically monitors application availability
+- **Environment variables**: Configurable port and credentials
+
+### **docker-compose.yml** Features:
+- **Service definition**: Automated build and configuration
+- **Named volume**: Persists articles between restarts
+- **Port mapping**: Accessible on configured PORT (default 8080)
+- **Restart policy**: Automatically restarts on failure
+- **Health checks**: Built-in container health monitoring
+- **Network isolation**: Default bridge network for security
+
+### **.dockerignore** Excludes:
+- Git files (`.git`, `.gitignore`)
+- IDE files (`.vscode`, `.idea`)
+- Test files (`*_test.go`, `coverage/`)
+- Build artifacts (`vendor/`, `dist/`)
+- Environment files (`.env` files)
+- Articles directory (populated at runtime)
+
+---
+
+## 🎯 Docker Commands Reference
+
+### Docker Compose Commands
+
+```bash
+# Build and start services
+docker-compose up -d
+
+# View running services
+docker-compose ps
+
+# View service logs
+docker-compose logs -f blog
+
+# Rebuild images
+docker-compose build
+
+# Rebuild and restart
+docker-compose up -d --build
+
+# Stop services
+docker-compose stop
+
+# Stop and remove containers
+docker-compose down
+
+# Remove services and volumes
+docker-compose down -v
+
+# Execute command in running container
+docker-compose exec blog /bin/sh
+
+# View service health
+docker-compose ps
+```
+
+### Docker Commands (without Compose)
+
+```bash
+# Build the image
+docker build -t personal-blog .
+
+# View images
+docker images
+
+# Run container
+docker run -d --name blog -p 8080:8080 personal-blog
+
+# View running containers
+docker ps
+
+# View container logs
+docker logs blog
+docker logs -f blog
+
+# Stop container
+docker stop blog
+
+# Remove container
+docker rm blog
+
+# Remove image
+docker rmi personal-blog
+
+# Execute command in container
+docker exec blog /bin/sh
+
+# Get container stats
+docker stats blog
+
+# Inspect container
+docker inspect blog
+```
+
+### Volume Commands
+
+```bash
+# List volumes
+docker volume ls
+
+# Create volume
+docker volume create blog-articles
+
+# Inspect volume
+docker inspect blog-articles
+
+# Remove volume
+docker volume rm blog-articles
+
+# List files in volume (using container)
+docker run -v blog-articles:/data alpine ls -la /data
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+```env
+# Port Configuration
+PORT=8080
+
+# Admin Authentication
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=123
+
+# Application Environment
+APP_ENV=development
+
+# Log Level
+LOG_LEVEL=info
+```
+
+**Important Notes:**
+- Never commit `.env` file to git (already in `.gitignore`)
+- Use strong passwords in production
+- Change default credentials before deployment
+- Use `.env.example` as a template only
+
+---
+
+## ✅ Verification Checklist
+
+After running `docker-compose up -d`, verify everything works:
+
+- [ ] Container is running: `docker-compose ps` shows `healthy`
+- [ ] Accessible via browser: `http://localhost:8080`
+- [ ] Can view articles on home page
+- [ ] Can login with credentials from `.env`
+- [ ] Can create new article
+- [ ] Articles persist after container restart: `docker-compose restart`
+- [ ] Data persists after full recreation: `docker-compose down && docker-compose up -d`
+
+---
+
+## 📊 Docker Image Details
+
+```
+Image: personal-blog
+Size: ~25MB (optimized)
+Base Image: alpine:3.18
+Go Version: 1.25.0
+Runtime User: bloguser (uid: 1000)
+Port: 8080
+Health Check: Enabled
+```
+
+**Size Breakdown:**
+- Alpine base: ~7MB
+- Go runtime: ~10MB
+- Application binary: ~8MB
+- Total: ~25MB
+
+---
+
+## 🐛 Docker Troubleshooting
+
+### Container won't start
+
+```bash
+# Check logs
+docker-compose logs blog
+
+# Common issues:
+# 1. Port already in use
+docker-compose down
+docker-compose up -d
+
+# 2. Previous container still running
+docker ps -a
+docker rm -f personal-blog
+
+# 3. Volume issues
+docker volume ls
+docker volume prune
+```
+
+### Health check failing
+
+```bash
+# Check container status
+docker-compose ps
+
+# Manually test health
+docker-compose exec blog wget -q http://localhost:8080 -O /dev/null && echo "OK"
+
+# View detailed logs
+docker-compose logs -f blog --tail 50
+```
+
+### Permission denied errors
+
+```bash
+# Fix permissions
+docker-compose down
+docker volume rm blog-articles
+docker-compose up -d
+```
+
+### Articles not persisting
+
+```bash
+# Check volume is mounted
+docker inspect personal-blog | grep -A 20 "Mounts"
+
+# Verify articles directory
+docker-compose exec blog ls -la /app/articles/
+
+# Check volume contents
+docker run -v blog-articles:/data alpine ls -la /data/
+```
+
+### Cannot login to admin
+
+```bash
+# Verify .env file
+cat .env
+
+# Check environment variables in container
+docker-compose exec blog env | grep AUTH
+
+# Restart container
+docker-compose restart blog
+```
+
+---
+
+## 🚀 Performance Tips
+
+- **First run** takes longer as it builds the image
+- **Subsequent runs** are fast due to layer caching
+- **Layer caching** is optimized: dependencies cached before code
+- Remove unused images: `docker image prune -a`
+- Clean up volumes: `docker volume prune`
+- Limit container resources if needed:
+
+```yaml
+# In docker-compose.yml services.blog
+deploy:
+  resources:
+    limits:
+      memory: 512M
+      cpus: '0.5'
+```
+
+---
+
+## 🔄 Development Workflow with Docker
+
+### Hot Reload (Docker Compose)
+
+For development with automatic rebuilds:
+
+```bash
+# Build and run in foreground (see logs)
+docker-compose up --build
+
+# Press Ctrl+C to stop
+# Modify files
+# Start again
+docker-compose up --build
+```
+
+### Access Application Shell
+
+```bash
+docker-compose exec blog /bin/sh
+
+# Now you can run commands inside container
+ls -la /app
+cat /app/articles/article1.json
+```
+
+### Debug Mode
+
+```bash
+# Run with interactive shell
+docker-compose run --rm blog /bin/sh
+
+# Inside container
+ls -la
+ps aux
+```
+
+---
 
 The application will start at `http://localhost:8080`
 
